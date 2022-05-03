@@ -1,0 +1,251 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <time.h>
+#include <allegro.h>
+
+
+/// STRUCTURE DES JOUEURS ///
+/* Cette structure gerera les donnees de joueurs tout au long de la partie */
+typedef struct joueur
+{
+        char pseudo[50];
+        int classe;
+        int PA;
+        int PM;
+        int PU;
+        int PV;
+        int position;  //c'est une matrice d'entier normalement mais j'arrive pas a initialiser mdrrr on laisse comme ca pour l'instant
+        int oldposition;
+        bool sortie;
+    } t_joueur;
+
+
+void initialisationAllegro(){
+    allegro_init();
+    set_color_depth(desktop_color_depth());
+    if((set_gfx_mode(GFX_AUTODETECT_WINDOWED,800,600,0,0))!=0){
+        allegro_message("Pb de mode graphique") ;
+        allegro_exit();
+        exit(EXIT_FAILURE);
+    }
+    install_keyboard();
+    install_mouse();
+}
+
+void AffichageEcran1(int* nb_joueur)
+{
+    BITMAP* accueil;
+    accueil = load_bitmap("accueilbis.bmp",NULL);
+
+    BITMAP* buffer;
+    buffer = create_bitmap(SCREEN_W, SCREEN_H);
+
+    int next=0; //va nous permettre de sortir de la boucle d'affichage lorsqu'un choix est fait
+
+    while(next!=1){
+
+        blit(accueil, buffer, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+        show_mouse(buffer);
+        blit(buffer, screen, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+        clear_bitmap(buffer);
+
+        if((mouse_b&1)&&(mouse_x>=174)&&(mouse_x<=290)&&(mouse_y>=286)&&(mouse_y<=387))
+            {
+                *nb_joueur=2;
+                next=1;
+                //allegro_message("joueur2");
+            }
+
+        if((mouse_b&1)&&(mouse_x>=320)&&(mouse_x<=431)&&(mouse_y>=286)&&(mouse_y<=387))
+            {
+                *nb_joueur=3;
+                next=1;
+                //allegro_message("joueur3");
+            }
+
+
+        if((mouse_b&1)&&(mouse_x>=463)&&(mouse_x<=575)&&(mouse_y>=286)&&(mouse_y<=387))
+            {
+                *nb_joueur=4;
+                next=1;
+                //allegro_message("joueur4");
+            }
+    }
+    allegro_message("Nombre de joueur valide!");
+    destroy_bitmap(buffer);
+    //clear_bitmap(accueil);
+    //destroy_bitmap(accueil);
+}
+
+void AffichageEcran2()
+{
+    BITMAP* accueil2;
+    accueil2 = load_bitmap("accueil2bis.bmp",NULL);
+
+    BITMAP* buffer2;
+    buffer2 = create_bitmap(SCREEN_W, SCREEN_H);
+
+    blit(accueil2, buffer2, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+    show_mouse(buffer2);
+    blit(buffer2, screen, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+    clear_bitmap(buffer2);
+    getch();
+}
+
+t_joueur* my_init(t_joueur* tab, int* nb_joueur) //On fait une fonction au type de la structure afin de pouvoir renvoyer ses modifications
+{
+    AffichageEcran1(nb_joueur);
+
+    tab = (t_joueur*)malloc(*nb_joueur * sizeof(t_joueur));  //Allocation dynamique de Tab et test pour blinder l'alloc
+
+    if (tab == NULL)
+        allegro_message("ERROR ALLOC");
+
+    for (int i = 0 ; i< *nb_joueur ; i++)
+    {
+            tab[i].position =0 ;
+            tab[i].oldposition = 0;
+            tab[i].PU=0;
+            tab[i].PA=5;
+            tab[i].PM=5;
+            tab[i].sortie = true;
+    }
+    return (tab);
+}
+
+void dataFill (t_joueur* num_joueur, int* nb_joueur)
+{
+    int compteur =0; // Initialisation d'un compteur qui va nous permettre de blinder la saisie
+    AffichageEcran2();
+
+    for (int i = 0; i<*nb_joueur; i++)  // Boucle for qui va saisir pour chaque joueur le pseudo
+    {                                                           // On remplit pour un joueur et le compteur passe à 1.
+        printf("\nVeuillez saisir le nom de travailleur :\n");
+        scanf("%s", num_joueur[i].pseudo);
+        printf("\nVeuillez choisir votre classe.\n");
+        do
+        {
+            fflush(stdin);
+            printf("\nTAPEZ - [1] pour la classe Hopital");
+            printf("\n        [2] pour la classe La Poste");
+            printf("\n        [3] pour la classe Brigade Anti-Criminalite");
+            printf("\n        [4] pour la classe Eboueurs");
+            printf("\n        [5] pour la classe Mairie");
+            printf("\n        [6] pour la classe RATP\n");
+            scanf("%d", &(num_joueur[i].classe));
+            if(compteur>0) // Si ce compteur passe à 1 ou +, on analyse les données des autres joueurs pour vérifier si le pion n'est pas déjà pris
+            {
+                for(int J=0 ; J<compteur ; J++)
+                {
+                    if(num_joueur[J].classe==num_joueur[i].classe)
+                    {
+                        printf("\n C'est le meme pion que le joueur %d", J+1);
+                         printf("\nLa classe saisie est: %d",(num_joueur[i].classe));
+                         num_joueur[i].classe=0;
+                         printf("\nREFAITES UN CHOIX ");
+                    }
+                }
+            }
+        }
+        while ((num_joueur[i].classe <1) || (num_joueur[i].classe >6)); //blindage de la saisie
+        compteur++;
+      }
+    allegro_message("Nom et classe des travailleurs valides!");
+    //destroy_bitmap(buffer2);
+
+    for (int i = 0; i<*nb_joueur; i++)
+    {
+        switch (num_joueur[i].classe)
+        {
+        case(1):
+            num_joueur[i].PV =1000 ;
+            break;
+
+        case(2):
+            num_joueur[i].PV = 800;
+            break;
+
+        case(3):
+            num_joueur[i].PV = 900;
+            break;
+
+        case(4):
+            num_joueur[i].PV = 850;
+            break;
+
+        case(5):
+            num_joueur[i].PV = 800;
+            break;
+
+        case(6):
+            num_joueur[i].PV = 800;
+            break;
+        }
+    }
+}
+
+void AffichageEcran3()
+{
+    BITMAP* battle;
+    battle = load_bitmap("battle.bmp",NULL);
+
+    BITMAP* buffer3;
+    buffer3 = create_bitmap(SCREEN_W, SCREEN_H);
+
+    while(!key[KEY_ESC])
+        {
+           blit(battle, buffer3, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+           show_mouse(buffer3);
+           blit(buffer3, screen, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+           clear_bitmap(buffer3);
+        }
+        destroy_bitmap(buffer3);
+        allegro_message("Sortie3");
+}
+
+void gestionTours(t_joueur* tab, int nb_joueur)
+{
+    int turn=0;
+    int choix=0;
+
+// La boucle while permet ici de faire tourner le jeu à l'infini pour ne pas terminer le programme tant que la partie n'est pas terminée
+    while (turn != 9999)
+    {
+        for (int i = 0 ; i<nb_joueur ; i++)
+        {
+            system("cls"); // Reset de console pour del l'affichage précédent
+            printf("\n\n\nTour du joueur [%s]\n", tab[i].pseudo); // Affiche quel joueur joue
+
+            if(tab[i].sortie == false) // Verification que le joueur n'est pas sous un sort
+               printf("Le joueur %s ne peut jouer.\n",tab[i].pseudo);
+
+            printf("Appuyez sur 0 pour passer au joueur suivant.\n");
+            scanf("%d",&choix);
+            turn++;
+        }
+    }
+}
+
+void LancementPartie()
+{
+    int nb_joueur = 0;
+    t_joueur* tab = NULL;
+
+    tab = my_init(tab, &nb_joueur);
+    dataFill(tab, &nb_joueur);
+    AffichageEcran3();
+    //gestionTours(tab, nb_joueur);
+    free(tab);
+}
+
+
+
+int main()
+{
+    srand(time(NULL));
+    initialisationAllegro();
+    LancementPartie();
+    allegro_exit();
+    return 0;
+}END_OF_MAIN();
