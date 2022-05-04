@@ -1,0 +1,471 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <time.h>
+#include <allegro.h>
+
+
+/// STRUCTURE DES JOUEURS ///
+
+typedef struct joueur  //Cette structure gerera les donnees de joueurs tout au long de la partie
+{
+        char pseudo[50];
+        int classe;
+        int PA;
+        int PM;
+        int PU;
+        int PV;
+        int x;  //c'est une matrice d'entier normalement mais j'arrive pas a initialiser mdrrr on laisse comme ca pour l'instant
+        int y;
+        int lastx; //avec des x et y
+        int lasty;
+        bool sortie;
+    } t_joueur;
+
+
+///  INITIALISATION ALLEGRO ///
+
+void initialisationAllegro(){
+    allegro_init();
+    set_color_depth(desktop_color_depth());
+    if((set_gfx_mode(GFX_AUTODETECT_WINDOWED,800,600,0,0))!=0){
+        allegro_message("Pb de mode graphique") ;
+        allegro_exit();
+        exit(EXIT_FAILURE);
+    }
+    install_keyboard();
+    install_mouse();
+}
+
+/// AFFICHAGE DES ECRANS ///
+//------------------------------------------------------------------//
+
+void AffichageEcran1(int* nb_joueur)
+{
+    BITMAP* accueil;
+    accueil = load_bitmap("accueilbis.bmp",NULL);
+
+    BITMAP* buffer;
+    buffer = create_bitmap(SCREEN_W, SCREEN_H);
+
+    int next=0; //va nous permettre de sortir de la boucle d'affichage lorsqu'un choix est fait
+
+    while(next!=1){
+
+        blit(accueil, buffer, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+        show_mouse(buffer);
+        blit(buffer, screen, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+        clear_bitmap(buffer);
+
+        if((mouse_b&1)&&(mouse_x>=174)&&(mouse_x<=290)&&(mouse_y>=286)&&(mouse_y<=387))
+            {
+                *nb_joueur=2;
+                next=1;
+                //allegro_message("joueur2");
+            }
+
+        if((mouse_b&1)&&(mouse_x>=320)&&(mouse_x<=431)&&(mouse_y>=286)&&(mouse_y<=387))
+            {
+                *nb_joueur=3;
+                next=1;
+                //allegro_message("joueur3");
+            }
+
+        if((mouse_b&1)&&(mouse_x>=463)&&(mouse_x<=575)&&(mouse_y>=286)&&(mouse_y<=387))
+            {
+                *nb_joueur=4;
+                next=1;
+                //allegro_message("joueur4");
+            }
+    }
+    allegro_message("Nombre de joueur valide!");
+    destroy_bitmap(buffer);
+    //clear_bitmap(accueil);
+    //destroy_bitmap(accueil);
+}
+
+void AffichageEcran2()
+{
+    BITMAP* accueil2;
+    accueil2 = load_bitmap("accueil2bis.bmp",NULL);
+
+    BITMAP* buffer2;
+    buffer2 = create_bitmap(SCREEN_W, SCREEN_H);
+
+    blit(accueil2, buffer2, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+    show_mouse(buffer2);
+    blit(buffer2, screen, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+    clear_bitmap(buffer2);
+    getch();
+}
+
+void AffichageEcran3()
+{
+    BITMAP* battle;
+    battle = load_bitmap("battle.bmp",NULL);
+
+    BITMAP* buffer3;
+    buffer3 = create_bitmap(SCREEN_W, SCREEN_H);
+
+    while(!key[KEY_ESC])
+        {
+           blit(battle, buffer3, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+           show_mouse(buffer3);
+           blit(buffer3, screen, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+           clear_bitmap(buffer3);
+        }
+        destroy_bitmap(buffer3);
+        allegro_message("Sortie3");
+}
+//-----------------------------------------------------------//
+
+
+/// FONCTIONS REMPLISSAGE DES INFOS JOUEURS ///
+//-----------------------------------------------------------//
+
+t_joueur* my_init(t_joueur* tab, int* nb_joueur) //On fait une fonction au type de la structure afin de pouvoir renvoyer ses modifications
+{
+    AffichageEcran1(nb_joueur);
+
+    tab = (t_joueur*)malloc(*nb_joueur * sizeof(t_joueur));  //Allocation dynamique de Tab et test pour blinder l'alloc
+
+    if (tab == NULL)
+        allegro_message("ERROR ALLOC");
+
+    for (int i = 0 ; i< *nb_joueur ; i++)
+    {
+            tab[i].x =0 ;
+            tab[i].y = 0;
+            tab[i].lastx =0 ;
+            tab[i].lasty = 0;
+            tab[i].PU=0;
+            tab[i].PA=5;
+            tab[i].PM=5;
+            tab[i].sortie = true;
+    }
+    return (tab);
+}
+
+void dataFill (t_joueur* num_joueur, int* nb_joueur)
+{
+    int compteur =0; // Initialisation d'un compteur qui va nous permettre de blinder la saisie
+    AffichageEcran2();
+
+    for (int i = 0; i<*nb_joueur; i++)  // Boucle for qui va saisir pour chaque joueur le pseudo
+    {                                                           // On remplit pour un joueur et le compteur passe à 1.
+        printf("\nVeuillez saisir le nom de travailleur :\n");
+        scanf("%s", num_joueur[i].pseudo);
+        printf("\nVeuillez choisir votre classe.\n");
+        do
+        {
+            fflush(stdin);
+            printf("\nTAPEZ - [1] pour la classe Hopital");
+            printf("\n        [2] pour la classe La Poste");
+            printf("\n        [3] pour la classe Brigade Anti-Criminalite");
+            printf("\n        [4] pour la classe Eboueurs");
+            printf("\n        [5] pour la classe Mairie");
+            printf("\n        [6] pour la classe RATP\n");
+            scanf("%d", &(num_joueur[i].classe));
+            if(compteur>0) // Si ce compteur passe à 1 ou +, on analyse les données des autres joueurs pour vérifier si le pion n'est pas déjà pris
+            {
+                for(int J=0 ; J<compteur ; J++)
+                {
+                    if(num_joueur[J].classe==num_joueur[i].classe)
+                    {
+                        printf("\n C'est le meme pion que le joueur %d", J+1);
+                         printf("\nLa classe saisie est: %d",(num_joueur[i].classe));
+                         num_joueur[i].classe=0;
+                         printf("\nREFAITES UN CHOIX ");
+                    }
+                }
+            }
+        }
+        while ((num_joueur[i].classe <1) || (num_joueur[i].classe >6)); //blindage de la saisie
+        compteur++;
+      }
+    allegro_message("Nom et classe des travailleurs valides!");
+    //destroy_bitmap(buffer2);
+
+    for (int i = 0; i<*nb_joueur; i++)
+    {
+        switch (num_joueur[i].classe)
+        {
+        case(1):
+            num_joueur[i].PV =1000 ;
+            break;
+
+        case(2):
+            num_joueur[i].PV = 800;
+            break;
+
+        case(3):
+            num_joueur[i].PV = 900;
+            break;
+
+        case(4):
+            num_joueur[i].PV = 850;
+            break;
+
+        case(5):
+            num_joueur[i].PV = 800;
+            break;
+
+        case(6):
+            num_joueur[i].PV = 800;
+            break;
+        }
+    }
+}
+//------------------------------------------------------//
+
+/// GESTION DES TOURS ///
+
+void gestionTours(t_joueur* tab, int nb_joueur)
+{
+    int turn=0;
+    int choix=0;
+
+// La boucle while permet ici de faire tourner le jeu à l'infini pour ne pas terminer le programme tant que la partie n'est pas terminée
+    while (turn != 9999)
+    {
+        for (int i = 0 ; i<nb_joueur ; i++)
+        {
+            system("cls"); // Reset de console pour del l'affichage précédent
+            printf("\n\nTour du joueur [%s]\n", tab[i].pseudo); // Affiche quel joueur joue
+
+            if(tab[i].sortie == false) // Verification que le joueur n'est pas sous un sort
+               printf("Le joueur %s ne peut jouer.\n",tab[i].pseudo);
+
+            printf("Appuyez sur 0 pour passer au joueur suivant.\n");
+            scanf("%d",&choix);
+            turn++;
+        }
+    }
+}
+
+/// LANCEMENT DE LA PARTIE ///
+
+void LancementPartie()
+{
+    int nb_joueur = 0;
+    t_joueur* tab = NULL;
+
+    tab = my_init(tab, &nb_joueur);
+    dataFill(tab, &nb_joueur);
+    AffichageEcran3();
+    //gestionTours(tab, nb_joueur);
+    free(tab);
+
+}
+
+int xPixeltoCoor(int xPixel) ///à faire avec les coordonnées de toutes les cases
+{
+    if((xPixel>=0)&&(xPixel<1))
+        return 1;
+}
+
+int yPixeltoCoor(int yPixel) ///à faire avec les coordonnées de toutes les cases
+{
+    if((yPixel>=0)&&(yPixel<1))
+        return 1;
+}
+
+int xCoortoPixel(int xCoor) ///a faire avec les pixels de toutes les cases
+{
+    if((xCoor>=0)&&(xCoor<1))
+        return 1;
+}
+
+int yCoortoPixel(int yCoor) ///a faire avec les pixels de toutes les cases
+{
+    if((yCoor>=0)&&(yCoor<1))
+        return 1;
+}
+
+int CombienDeDegats(int classe, int id) //on peut enlever la variable degats et mettre direct des return mais j'ai fait trop vite mdr
+{
+    int degats=0;
+    ///correspond à un corps a corps
+    if(id==0)
+    {
+      switch (classe)
+      {
+    case 1:
+        degats=70;
+        break;
+    case 2:
+        degats=70;
+        break;
+    case 3:
+        degats=100;
+        break;
+    case 4:
+        degats=80;
+        break;
+    case 5:
+        degats=70;
+        break;
+    case 6:
+        degats=80;
+        break;
+      }
+    }
+
+    ///correspond à un sort 1
+    if(id==1)
+    {
+        switch (classe)
+        {
+    case 1:
+        degats=110;
+        break;
+    case 2:
+        degats=100;
+        break;
+    case 3:
+        degats=100;
+        break;
+    case 4:
+        degats=100;
+        break;
+    case 5:
+        degats=120;
+        break;
+    case 6:
+        degats=110;
+        break;
+        }
+    }
+    return degats;
+}
+
+void CorpsACorps(t_joueur* tab, int i, int nb_joueur)
+{
+    int xCase, yCase, degats;
+    int next=0;
+    int id=0;
+
+    ///DETERMINATION DES DEGATS EN FONCTION DE LA CLASSE DE L'ENVOYEUR
+    degats=CombienDeDegats(tab[i].classe,id);
+
+    ///AFFICHAGE BOUCLE DE LA DEMANDE UTILISATEUR
+    while(next!=1)
+    {
+      //blit(arena, buffer, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+      //show_mouse(buffer);
+      //blit(buffer, screen, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+      textout_ex(screen,font,"Vous avez choisi le corps à corps à 2PA.", 100, 30,makecol(255,255,255),-1);
+      textout_ex(screen,font,"Veuillez appuyer sur la case de votre attaque.",100,40,makecol(255,255,255),-1);
+      //clear_bitmap(buffer);
+
+      ///Si la souris clique sur l'arene
+      if((mouse_b&1)&&(mouse_x>=0)&&(mouse_x<1)&&(mouse_y>=0)&&(mouse_y<1))
+      {
+         xCase=mouse_x;
+         yCase=mouse_y;
+         next=1;
+      }
+
+      ///Si la case cliquée n'est pas autour du joueur attaquant
+      //if(((tab[i].x==xPixeltoCoor(xCase)-1)||(tab[i].x==xPixeltoCoor(xCase)+1)) && ((tab[i].y==yPixeltoCoor(yCase)-1)||(tab[i].y==yPixeltoCoor(yCase)+1)) && (tab[i].x!=xPixeltoCoor(xCase)) && (tab[i].y!=yPixeltoCoor(yCase)))
+      //if((tab[i].x>=xPixeltoCoor(xCase)-1)&&(tab[i].x<=xPixeltoCoor(xCase)+1)&&(tab[i].y<yPixeltoCoor(yCase)-1)&&(tab[i].y>yPixeltoCoor(yCase)+1)&&(tab[i].x))
+      if((tab[i].x - xPixeltoCoor(xCase)>=2) || (tab[i].x - xPixeltoCoor(xCase)<=-2)||(tab[i].y - yPixeltoCoor(yCase)>= 2) || (tab[i].y - yPixeltoCoor(yCase)<= -2) || ((tab[i].x==xPixeltoCoor(xCase)&&(tab[i].y==yPixeltoCoor(yCase)))))
+      {
+          allegro_message("C'est pas une case autour de vous.");
+          next=0;
+      }
+
+      ///ATTAQUE
+      for(int k=0;k<nb_joueur;i++)
+      {
+          ///si un joueur est dans la case visé et que l'attaquant a assez de PA
+        if((tab[k].x)==(xPixeltoCoor(xCase)) && (tab[k].y)==(yPixeltoCoor(yCase))&&(tab[i].PA>=2))
+            {
+              tab[k].PV=tab[k].PV-degats;
+              tab[i].PA=tab[i].PA-2;
+              tab[i].PU=tab[i].PU+2;
+            }
+
+        else if((tab[k].x!=xPixeltoCoor(xCase))||(tab[k].y!=yPixeltoCoor(yCase)))
+            {
+                next=0;
+                allegro_message("Personne sur cette case.");
+            }
+        else if (tab[i].PA<2)
+        {
+            next=0;
+            allegro_message("Pas assez de PA.");
+        }
+      }
+    }
+}
+
+void PremierSort(t_joueur* tab, int i, int nb_joueur)
+{
+    int xCase, yCase, degats;
+    int next=0;
+    int id=1;
+
+    ///DETERMINATION DES DEGATS EN FONCTION DE LA CLASSE DE L'ENVOYEUR
+    degats=CombienDeDegats(tab[i].classe,id);
+
+    ///AFFICHAGE BOUCLE DE LA DEMANDE UTILISATEUR
+    while(next!=1)
+    {
+      //blit(arena, buffer, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+      //show_mouse(buffer);
+      //blit(buffer, screen, 0, 0, 0, 0,SCREEN_W, SCREEN_H);
+      textout_ex(screen,font,"Vous avez choisi le premier sort à 3PA.", 100, 30,makecol(255,255,255),-1);
+      textout_ex(screen,font,"Veuillez appuyer sur la case de votre attaque.",100,40,makecol(255,255,255),-1);
+      //clear_bitmap(buffer);
+
+      ///Si la souris clique sur l'arene
+      if((mouse_b&1)&&(mouse_x>=0)&&(mouse_x<1)&&(mouse_y>=0)&&(mouse_y<1))
+      {
+         xCase=mouse_x;
+         yCase=mouse_y;
+         next=1;
+      }
+
+      ///Si la case cliquée est trop près de l'attaquant A FINIR
+     // if(((tab[i].x - xPixeltoCoor(xCase)>=2)||(tab[i].x - xPixeltoCoor(xCase)<=-2)) && ((tab[i].y!=yPixeltoCoor(yCase)-1)||(tab[i].y!=yPixeltoCoor(yCase)+1)) && (tab[i].x!=xPixeltoCoor(xCase)) && (tab[i].y!=yPixeltoCoor(yCase)))
+
+
+     ///Si la case cliquée est trop loin de l'attaquant A FINIR
+
+      ///ATTAQUE
+      for(int k=0;k<nb_joueur;i++)
+      {
+          ///si un joueur est dans la case visé et que l'attaquant a assez de PA
+        if((tab[k].x)==(xPixeltoCoor(xCase)) && (tab[k].y)==(yPixeltoCoor(yCase))&&(tab[i].PA>=2))
+            {
+              tab[k].PV=tab[k].PV-degats; ///on doit implementer les probabilites des degats
+              tab[i].PA=tab[i].PA-3;
+              tab[i].PU=tab[i].PU+3;
+            }
+
+        else if((tab[k].x!=xPixeltoCoor(xCase))||(tab[k].y!=yPixeltoCoor(yCase)))
+            {
+                next=0;
+                allegro_message("Personne sur cette case.");
+            }
+        else if (tab[i].PA<3)
+        {
+            next=0;
+            allegro_message("Pas assez de PA.");
+        }
+      }
+    }
+}
+
+
+int main()
+{
+    srand(time(NULL));
+    initialisationAllegro();
+    LancementPartie();
+    allegro_message("Sortie finale");
+
+    allegro_exit();
+    return 0;
+}END_OF_MAIN();
