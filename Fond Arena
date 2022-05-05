@@ -1,0 +1,120 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <allegro.h>
+
+void initialisationAllegro()
+{
+    allegro_init();
+    set_color_depth(desktop_color_depth());
+    if((set_gfx_mode(GFX_AUTODETECT_WINDOWED,800,600,0,0))!=0)
+    {
+        allegro_message("Pb de mode graphique") ;
+        exit(EXIT_FAILURE);
+    }
+}
+
+int main()
+{
+    initialisationAllegro();
+    install_keyboard();
+    install_mouse();
+    BITMAP*img;
+    BITMAP*page;
+    BITMAP*fond;
+    fond=load_bitmap("Fond.bmp",NULL);
+    blit(fond,screen,0,0,0,0,SCREEN_W,SCREEN_H);
+    int blanc= makecol(255,255,255);
+    int noir= makecol(0,0,0);
+
+
+    /// Carré de la map rect(screen, x1, y1, x2, y2, couleur)
+    rectfill(screen, 201, 101, 599, 499, noir);
+    rect(screen,200, 100, 600, 500, blanc);
+
+    /// Lignes verticales vline(screen, x, ydebut, yfin, couleur)
+    vline(screen, 250, 100, 500, blanc);
+    vline(screen, 300, 100, 500, blanc);
+    vline(screen, 350, 100, 500, blanc);
+    vline(screen, 400, 100, 500, blanc);
+    vline(screen, 450, 100, 500, blanc);
+    vline(screen, 500, 100, 500, blanc);
+    vline(screen, 550, 100, 500, blanc);
+
+    ///lignes horizontales hline(screen, xdebut, y, xfin, couleur)
+    hline(screen, 200, 150, 600, blanc);
+    hline(screen, 200, 200, 600, blanc);
+    hline(screen, 200, 250, 600, blanc);
+    hline(screen, 200, 300, 600, blanc);
+    hline(screen, 200, 350, 600, blanc);
+    hline(screen, 200, 400, 600, blanc);
+    hline(screen, 200, 450, 600, blanc);
+
+    /// Titre
+    // textprintf_ex(screen, font, 325, 20, makecol(255,255,255), -1, "SERVICE PUBLIC ARENA");
+
+    /// Tour du joueur
+    textprintf_ex(screen, font,300 , 60, noir,-1, "Tour de : " );
+
+    /// Action à choisir en gros
+    //textprintf_ex(screen, font, 280, 75, noir,-1, "test");
+
+    /// Cases d'action rect(screen, x1, y1, x2, y2, couleur) rectfill(screen, x1-1, y1-1, x2-2, y2-2, couleur)
+    // corps à corps
+    rect(screen, 200, 518, 245, 563, blanc);
+    rectfill(screen, 201, 519, 244, 562, noir);
+    textprintf_ex(screen, font, 211, 568, noir,-1, "cac");
+    // sort 1
+    rect(screen, 250, 518, 295, 563, blanc);
+    rectfill(screen, 251, 519, 294, 562, noir);
+    textprintf_ex(screen, font, 250, 568, noir,-1, "Sort1");
+    // sort 2
+    rect(screen, 300, 518, 345, 563, blanc);
+    rectfill(screen, 301, 519, 344, 562, noir);
+    textprintf_ex(screen, font, 300, 568, noir,-1, "Sort2");
+    // passif
+    rect(screen, 351, 518, 396, 563, blanc);
+    rectfill(screen, 352, 519, 395, 562, noir);
+    textprintf_ex(screen, font, 351, 568, noir,-1, "Passif");
+    // mouvement
+    rect(screen, 402, 518, 447, 563, blanc);
+    rectfill(screen, 403, 519, 446, 562, noir);
+    textprintf_ex(screen, font, 413, 568, noir,-1, "Mvt");
+    // ulti
+    rect(screen, 453, 518, 498, 563, blanc);
+    rectfill(screen, 452, 519, 497, 562, noir);
+    textprintf_ex(screen, font, 460, 568, noir,-1, "Ulti");
+    // help
+    rect(screen, 504, 518, 549, 563, blanc);
+    rectfill(screen, 503, 519, 548, 562, noir);
+    textprintf_ex(screen, font, 511, 568, noir,-1, "Help");
+    // joueur suivant
+    rect(screen, 555, 518, 600, 563, blanc);
+    rectfill(screen, 554, 519, 599, 562, noir);
+    textprintf_ex(screen, font, 562, 568, noir,-1, "Next");
+
+    /// Info du joueur
+    // pv
+    textprintf_ex(screen, font, 615, 360, noir,-1, "PV : ");
+    // pa
+    textprintf_ex(screen, font, 615, 375, noir,-1, "PA : ");
+    // pm
+    textprintf_ex(screen, font, 615, 390, noir,-1, "PM : ");
+    // pu
+    textprintf_ex(screen, font, 615, 405, noir,-1, "PU : ");
+
+
+
+
+    while(!key[KEY_ESC])
+    {
+
+
+    }
+    destroy_bitmap(fond);
+
+
+    allegro_exit();
+    getch();
+    return 0;
+}
+END_OF_MAIN() ;
